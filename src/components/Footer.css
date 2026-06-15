@@ -1,0 +1,40 @@
+/* ============================================
+   FOOTER
+   ============================================ */
+
+.footer {
+  padding: var(--space-3xl) 0 var(--space-xl);
+  text-align: center;
+  position: relative;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 1px;
+  background: var(--gradient-rose);
+}
+
+.footer-heart {
+  font-size: 2rem;
+  margin-bottom: var(--space-md);
+  animation: heartbeat 2s ease-in-out infinite;
+  display: inline-block;
+}
+
+.footer-message {
+  font-family: var(--font-script);
+  font-size: var(--fs-lg);
+  color: var(--color-rose-gold-light);
+  margin-bottom: var(--space-sm);
+}
+
+.footer-year {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+}

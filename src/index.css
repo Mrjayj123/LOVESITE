@@ -1,0 +1,305 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
+
+/* ============================================
+   DESIGN SYSTEM — Paula's Website
+   ============================================ */
+
+:root {
+  /* ---- Color Palette ---- */
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #12121a;
+  --color-bg-tertiary: #1a1a28;
+  --color-bg-card: rgba(26, 26, 40, 0.7);
+
+  --color-rose-gold: #b76e79;
+  --color-rose-gold-light: #d4a0a8;
+  --color-rose-gold-dark: #8a4f57;
+  --color-soft-pink: #e8a0b5;
+  --color-blush: #f0c4d4;
+  --color-burgundy: #722f37;
+  --color-burgundy-deep: #4a1c22;
+  --color-warm-gold: #d4a574;
+  --color-warm-gold-light: #e8c9a0;
+  --color-champagne: #f7e7ce;
+
+  --color-text-primary: #f5f0f0;
+  --color-text-secondary: rgba(245, 240, 240, 0.7);
+  --color-text-muted: rgba(245, 240, 240, 0.45);
+  --color-text-accent: var(--color-rose-gold-light);
+
+  --color-border: rgba(183, 110, 121, 0.2);
+  --color-border-hover: rgba(183, 110, 121, 0.5);
+
+  /* ---- Gradients ---- */
+  --gradient-rose: linear-gradient(135deg, var(--color-rose-gold) 0%, var(--color-soft-pink) 50%, var(--color-warm-gold) 100%);
+  --gradient-dark: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  --gradient-card: linear-gradient(145deg, rgba(183, 110, 121, 0.1) 0%, rgba(26, 26, 40, 0.8) 100%);
+  --gradient-glow: radial-gradient(ellipse at center, rgba(183, 110, 121, 0.15) 0%, transparent 70%);
+  --gradient-text: linear-gradient(135deg, var(--color-champagne) 0%, var(--color-rose-gold-light) 30%, var(--color-warm-gold-light) 60%, var(--color-soft-pink) 100%);
+
+  /* ---- Typography ---- */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-script: 'Dancing Script', cursive;
+
+  --fs-xs: clamp(0.7rem, 0.8vw, 0.8rem);
+  --fs-sm: clamp(0.8rem, 1vw, 0.9rem);
+  --fs-base: clamp(0.95rem, 1.1vw, 1.05rem);
+  --fs-md: clamp(1.1rem, 1.3vw, 1.25rem);
+  --fs-lg: clamp(1.4rem, 2vw, 1.8rem);
+  --fs-xl: clamp(2rem, 3vw, 2.8rem);
+  --fs-2xl: clamp(2.5rem, 4vw, 4rem);
+  --fs-3xl: clamp(3.5rem, 6vw, 6rem);
+  --fs-hero: clamp(4rem, 8vw, 9rem);
+
+  /* ---- Spacing ---- */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+  --space-section: clamp(4rem, 8vh, 8rem);
+
+  /* ---- Borders & Radius ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-round: 50%;
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 30px rgba(183, 110, 121, 0.3);
+  --shadow-glow-strong: 0 0 60px rgba(183, 110, 121, 0.4);
+
+  /* ---- Transitions ---- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 0.2s var(--ease-out);
+  --transition-base: 0.3s var(--ease-out);
+  --transition-slow: 0.6s var(--ease-out);
+
+  /* ---- Glass ---- */
+  --glass-bg: rgba(26, 26, 40, 0.6);
+  --glass-border: rgba(183, 110, 121, 0.15);
+  --glass-blur: 20px;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--color-text-accent);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-soft-pink);
+}
+
+img, video {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-rose-gold-dark);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-rose-gold);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+.glass-strong {
+  background: rgba(26, 26, 40, 0.8);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(183, 110, 121, 0.25);
+}
+
+.text-gradient {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.section-subtitle {
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  color: var(--color-text-secondary);
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto var(--space-2xl);
+  font-weight: 300;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-15px) rotate(2deg); }
+  66% { transform: translateY(-8px) rotate(-1deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(183, 110, 121, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(183, 110, 121, 0.4), 0 0 80px rgba(183, 110, 121, 0.1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.15); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.1); }
+  56% { transform: scale(1); }
+}
+
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  50% { border-color: transparent; }
+}
+
+@keyframes particleRise {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulseGlow 3s ease-in-out infinite; }
+.animate-heartbeat { animation: heartbeat 2s ease-in-out infinite; }
+
+/* ============================================
+   RESPONSIVE CONTAINER
+   ============================================ */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-md);
+  }
+}
+  

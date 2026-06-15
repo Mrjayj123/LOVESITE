@@ -1,0 +1,175 @@
+/* ============================================
+   HERO SECTION
+   ============================================ */
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+/* ---- Ambient Glow ---- */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(183, 110, 121, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(212, 165, 116, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 50%, rgba(232, 160, 181, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ---- Floating Hearts ---- */
+.hero-hearts {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-heart {
+  position: absolute;
+  font-size: 1.2rem;
+  opacity: 0;
+  animation: heartFloat linear infinite;
+}
+
+@keyframes heartFloat {
+  0% {
+    transform: translateY(100vh) translateX(0) rotate(0deg) scale(0.5);
+    opacity: 0;
+  }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.3; }
+  100% {
+    transform: translateY(-10vh) translateX(50px) rotate(360deg) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* ---- Content ---- */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.hero-greeting {
+  font-family: var(--font-script);
+  font-size: var(--fs-lg);
+  color: var(--color-rose-gold-light);
+  font-weight: 400;
+}
+
+.hero-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-hero);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background: var(--gradient-text);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 40px rgba(183, 110, 121, 0.3));
+}
+
+.hero-heart-icon {
+  font-size: var(--fs-2xl);
+  display: inline-block;
+  animation: heartbeat 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(232, 160, 181, 0.5));
+}
+
+.hero-quote {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-style: italic;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.hero-subtitle {
+  font-size: var(--fs-base);
+  color: var(--color-text-muted);
+  font-weight: 300;
+}
+
+/* ---- Scroll Indicator ---- */
+.hero-scroll-indicator {
+  position: absolute;
+  bottom: var(--space-2xl);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-base);
+}
+
+.hero-scroll-indicator:hover {
+  opacity: 0.8;
+}
+
+.hero-scroll-text {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.hero-scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--color-rose-gold), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 1; height: 40px; }
+  50% { opacity: 0.4; height: 25px; }
+}
+
+/* ---- Divider ---- */
+.section-divider {
+  width: 80px;
+  height: 2px;
+  background: var(--gradient-rose);
+  margin: 0 auto;
+  border-radius: 1px;
+  opacity: 0.5;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .hero {
+    padding: var(--space-lg);
+  }
+
+  .hero-name {
+    font-size: clamp(3rem, 12vw, 5rem);
+  }
+
+  .hero-quote {
+    font-size: var(--fs-base);
+  }
+}

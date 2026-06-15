@@ -1,0 +1,284 @@
+/* ============================================
+   CHESS PUZZLE GATE
+   ============================================ */
+
+.chess-puzzle-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Ambient Background ---- */
+.chess-puzzle-gate::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(114, 47, 55, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(183, 110, 121, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(212, 165, 116, 0.05) 0%, transparent 50%);
+  animation: gradientShift 15s ease infinite;
+  background-size: 200% 200%;
+}
+
+.chess-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.chess-particle {
+  position: absolute;
+  font-size: 1.5rem;
+  opacity: 0.06;
+  animation: particleRise linear infinite;
+}
+
+/* ---- Main Content ---- */
+.chess-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  animation: fadeIn 1s ease;
+}
+
+.chess-header {
+  text-align: center;
+  animation: fadeInUp 0.8s ease;
+}
+
+.chess-lock-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-md);
+  animation: float 4s ease-in-out infinite;
+}
+
+.chess-header h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.chess-header p {
+  font-size: var(--fs-base);
+  color: var(--color-text-secondary);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.chess-header .name-tease {
+  color: var(--color-rose-gold-light);
+  font-family: var(--font-script);
+  font-size: var(--fs-lg);
+  margin-top: var(--space-sm);
+}
+
+/* ---- Chessboard Container ---- */
+.chess-board-wrapper {
+  position: relative;
+  border-radius: var(--radius-lg);
+  padding: 3px;
+  background: linear-gradient(135deg, var(--color-rose-gold-dark), var(--color-burgundy), var(--color-rose-gold-dark));
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite, scaleIn 0.6s var(--ease-spring) 0.3s both;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.chess-board-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(var(--radius-lg) + 4px);
+  background: linear-gradient(135deg, var(--color-rose-gold), transparent, var(--color-warm-gold));
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+  opacity: 0.4;
+  z-index: -1;
+  filter: blur(8px);
+}
+
+.chess-board-inner {
+  background: var(--color-bg-secondary);
+  border-radius: calc(var(--radius-lg) - 2px);
+  padding: var(--space-lg);
+  overflow: hidden;
+  width: 100%;
+}
+
+/* ---- Move Counter ---- */
+.chess-move-counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  animation: fadeInUp 0.6s ease 0.5s both;
+}
+
+.move-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-round);
+  border: 2px solid var(--color-rose-gold-dark);
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.move-dot.completed {
+  background: var(--color-rose-gold);
+  border-color: var(--color-rose-gold);
+  box-shadow: 0 0 10px rgba(183, 110, 121, 0.5);
+}
+
+.move-dot.current {
+  border-color: var(--color-rose-gold-light);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.move-label {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  margin-left: var(--space-sm);
+  font-weight: 500;
+}
+
+/* ---- Status & Feedback ---- */
+.chess-status {
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  animation: fadeInUp 0.6s ease 0.7s both;
+}
+
+.chess-status-text {
+  font-size: var(--fs-base);
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  transition: all var(--transition-fast);
+}
+
+.chess-status-text.error {
+  color: #e74c3c;
+  animation: shake 0.4s ease;
+}
+
+.chess-status-text.success {
+  color: var(--color-soft-pink);
+  font-size: var(--fs-md);
+  font-weight: 500;
+}
+
+.chess-hint-btn {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  background: transparent;
+}
+
+.chess-hint-btn:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-secondary);
+  background: rgba(183, 110, 121, 0.05);
+}
+
+.chess-hint-text {
+  font-size: var(--fs-sm);
+  color: var(--color-warm-gold);
+  font-style: italic;
+  max-width: 350px;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+.chess-reset-btn {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  background: transparent;
+  margin-top: var(--space-xs);
+}
+
+.chess-reset-btn:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--color-text-secondary);
+}
+
+/* ---- Shake Animation ---- */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* ---- Success Overlay ---- */
+.chess-success-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 15, 0.95);
+}
+
+.chess-success-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.chess-success-heart {
+  font-size: 5rem;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.chess-success-text {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 500px) {
+  .chess-content {
+    padding: var(--space-md);
+  }
+
+  .chess-board-inner {
+    padding: var(--space-md);
+  }
+
+  .chess-header h1 {
+    font-size: var(--fs-lg);
+  }
+}

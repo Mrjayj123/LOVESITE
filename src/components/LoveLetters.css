@@ -1,0 +1,115 @@
+/* ============================================
+   LOVE LETTERS
+   ============================================ */
+
+.love-letters {
+  padding: var(--space-section) 0;
+  position: relative;
+}
+
+.love-letters::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(ellipse at center, rgba(183, 110, 121, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.letters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-xl);
+}
+
+.letter-card {
+  position: relative;
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  transition: all var(--transition-base);
+  overflow: hidden;
+}
+
+.letter-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-rose);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.letter-card:hover {
+  border-color: var(--color-border-hover);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-glow);
+}
+
+.letter-card:hover::before {
+  opacity: 1;
+}
+
+/* ---- Card Ambient Glow ---- */
+.letter-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(183, 110, 121, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.letter-date {
+  font-size: var(--fs-xs);
+  color: var(--color-rose-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+}
+
+.letter-title {
+  font-family: var(--font-script);
+  font-size: var(--fs-xl);
+  color: var(--color-champagne);
+  margin-bottom: var(--space-md);
+  line-height: 1.3;
+}
+
+.letter-content {
+  font-size: var(--fs-base);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+  font-weight: 300;
+  position: relative;
+  z-index: 1;
+}
+
+.letter-flourish {
+  margin-top: var(--space-lg);
+  text-align: right;
+  font-size: 1.5rem;
+  opacity: 0.4;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .letters-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  .letter-card {
+    padding: var(--space-lg);
+  }
+}
