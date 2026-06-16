@@ -4,7 +4,7 @@
 
 export const siteContent = {
   // ---- General ----
-  name: "Paula",
+  name: "Konzi",
   tagline: "My Favorite Person",
   
   // ---- Hero Section ----
@@ -70,7 +70,7 @@ export const siteContent = {
   loveLetters: [
     {
       date: "Forever & Always",
-      title: "My Dearest Paula",
+      title: "My Dearest Konzi",
       content: "There aren't enough words in any language to describe how much you mean to me. You are my peace, my joy, my everything. Every day with you feels like a gift I never knew I deserved.",
     },
     {
@@ -123,7 +123,7 @@ export const siteContent = {
     title: "Solve to Unlock",
     subtitle: "Find the checkmate in 4 moves to reveal something special",
     hint: "Think about the Scholar's Mate — attack the f7 square!",
-    successMessage: "Brilliant! You've unlocked Paula's world 💖",
+    successMessage: "Brilliant! You've unlocked Konzi's world 💖",
   },
 
   // ---- Footer ----

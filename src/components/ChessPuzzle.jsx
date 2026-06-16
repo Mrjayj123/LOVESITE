@@ -20,6 +20,10 @@ const HINTS = [
   "Deliver the final blow! Move your Knight to f7 for a beautiful smothered checkmate. 💖",
 ];
 
+const TYPE_TO_KEY = {
+  king: 'k', queen: 'q', rook: 'r', bishop: 'b', knight: 'n', pawn: 'p'
+};
+
 const PIECES = {
   k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
   K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
@@ -44,6 +48,11 @@ export default function ChessPuzzle({ onSolved }) {
   const [legalMoves, setLegalMoves] = useState([]);
   const timeoutRef = useRef(null);
 
+  const moveIndexRef = useRef(moveIndex);
+  const solvedRef = useRef(solved);
+  moveIndexRef.current = moveIndex;
+  solvedRef.current = solved;
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -53,8 +62,9 @@ export default function ChessPuzzle({ onSolved }) {
   const getPieceDetails = (square) => {
     const piece = game.get(square);
     if (!piece) return null;
-    let key = piece.type === 'knight' ? 'n' : piece.type;
-    key = piece.color === 'w' ? key.toUpperCase() : key;
+    const baseKey = TYPE_TO_KEY[piece.type];
+    if (!baseKey) return null;
+    const key = piece.color === 'w' ? baseKey.toUpperCase() : baseKey;
     return { symbol: PIECES[key] || '', color: piece.color };
   };
 
@@ -75,7 +85,7 @@ export default function ChessPuzzle({ onSolved }) {
         if (moves.length) {
           setSelectedSquare(square);
           setLegalMoves(moves);
-          setStatusText("Selected piece. Click an open square.");
+          setStatusText("Selected piece. Click a highlighted square.");
           setStatusClass('');
         }
       }
@@ -95,11 +105,12 @@ export default function ChessPuzzle({ onSolved }) {
             setGame(gameCopy);
             setSelectedSquare(null);
             setLegalMoves([]);
-            setStatusText("Good move! ✨");
-            setStatusClass('');
 
-            // ✅ onSolved called immediately inside click — no setTimeout
-            if (gameCopy.isCheckmate() || moveIndex === EXPLICIT_SOLUTION.length - 1) {
+            const currentMoveIndex = moveIndex;
+            const nextMoveIndex = currentMoveIndex + 1;
+            const isLastMove = currentMoveIndex === EXPLICIT_SOLUTION.length - 1;
+
+            if (isLastMove) {
               setSolved(true);
               setStatusText("Checkmate! Room unlocked. 💖");
               setStatusClass('success');
@@ -107,23 +118,23 @@ export default function ChessPuzzle({ onSolved }) {
               return;
             }
 
-            const nextMoveIndex = moveIndex + 1;
+            setStatusText("Good move! ✨");
+            setStatusClass('');
             setMoveIndex(nextMoveIndex);
 
-            if (nextMoveIndex < EXPLICIT_SOLUTION.length && EXPLICIT_SOLUTION[moveIndex]?.black) {
+            const blackMove = EXPLICIT_SOLUTION[currentMoveIndex]?.black;
+            if (blackMove) {
               setWaitingForBlack(true);
+              const fenAfterWhite = gameCopy.fen();
               timeoutRef.current = setTimeout(() => {
-                const blackMove = EXPLICIT_SOLUTION[moveIndex]?.black;
-                if (blackMove) {
-                  const afterWhite = new Chess(gameCopy.fen());
-                  const blackResult = afterWhite.move(blackMove);
-                  if (blackResult) {
-                    setGame(afterWhite);
-                    const remaining = EXPLICIT_SOLUTION.length - nextMoveIndex;
-                    setStatusText(remaining > 0
-                      ? `Move ${nextMoveIndex + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`
-                      : "Almost there...");
-                  }
+                const afterWhite = new Chess(fenAfterWhite);
+                const blackResult = afterWhite.move(blackMove);
+                if (blackResult) {
+                  setGame(afterWhite);
+                  const remaining = EXPLICIT_SOLUTION.length - nextMoveIndex;
+                  setStatusText(remaining > 0
+                    ? `Move ${nextMoveIndex + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`
+                    : "Almost there...");
                 }
                 setWaitingForBlack(false);
               }, 600);
@@ -141,15 +152,28 @@ export default function ChessPuzzle({ onSolved }) {
         setSelectedSquare(null);
         setLegalMoves([]);
         timeoutRef.current = setTimeout(() => {
-          setStatusText(`Move ${moveIndex + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`);
-          setStatusClass('');
+          if (!solvedRef.current) {
+            setStatusText(`Move ${moveIndexRef.current + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`);
+            setStatusClass('');
+          }
         }, 2000);
       }
     } else {
-      setStatusText("Not a legal destination.");
-      setStatusClass('error');
+      const piece = game.get(square);
+      if (piece && piece.color === 'w') {
+        const moves = getLegalMovesForSquare(square);
+        if (moves.length) {
+          setSelectedSquare(square);
+          setLegalMoves(moves);
+          setStatusText("Selected piece. Click a highlighted square.");
+          setStatusClass('');
+          return;
+        }
+      }
       setSelectedSquare(null);
       setLegalMoves([]);
+      setStatusText("Click one of your pieces to select it.");
+      setStatusClass('');
     }
   };
 
@@ -159,7 +183,9 @@ export default function ChessPuzzle({ onSolved }) {
     if (expected) {
       setStatusText(`Hint: Move ${expected.from.toUpperCase()} → ${expected.to.toUpperCase()}`);
       timeoutRef.current = setTimeout(() => {
-        if (!solved) setStatusText(`Move ${moveIndex + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`);
+        if (!solvedRef.current) {
+          setStatusText(`Move ${moveIndexRef.current + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`);
+        }
       }, 4000);
     }
   };
@@ -185,13 +211,15 @@ export default function ChessPuzzle({ onSolved }) {
     <div className="chess-puzzle-gate">
       <div className="chess-content">
 
+        {/* Header */}
         <div className="chess-header">
           <div className="chess-lock-icon">🔒</div>
           <h1 className="tracking-wide text-3xl font-bold uppercase mb-2">Solve to Unlock</h1>
           <p className="opacity-90 max-w-sm mx-auto">Find the checkmate in 4 moves to reveal something special</p>
-          <p className="name-tease italic mt-2 text-rose-300 font-serif">— for Paula —</p>
+          <p className="name-tease italic mt-2 text-rose-300 font-serif">— for Konzi —</p>
         </div>
 
+        {/* Move progress dots */}
         <div className="chess-move-counter">
           {Array.from({ length: totalMoves }).map((_, i) => (
             <div
@@ -206,46 +234,82 @@ export default function ChessPuzzle({ onSolved }) {
           </span>
         </div>
 
-        <div className="w-full max-w-[420px] p-4 bg-gradient-to-br from-[#3e2723] via-[#1a0c0a] to-[#3e2723] rounded-xl shadow-2xl border-4 border-[#2d1a18]/80 ring-2 ring-amber-900/40 subtle-scale-in">
-          <div className="grid grid-cols-8 grid-rows-8 aspect-square w-full rounded-sm overflow-hidden bg-stone-900 shadow-inner">
-            {ROWS.map((row, rowIndex) =>
-              COLS.map((col, colIndex) => {
-                const square = col + row;
-                const pieceData = getPieceDetails(square);
-                const isDarkSquare = (colIndex + rowIndex) % 2 === 1;
-                const isSelected = selectedSquare === square;
-                const isValidTarget = legalMoves.includes(square);
+        {/* Rich Chessboard */}
+        <div className="chess-board-wrapper">
+          <div className="chess-board-inner">
 
-                return (
-                  <button
-                    key={square}
-                    onClick={() => onSquareClick(square)}
-                    className={`
-                      relative w-full h-full flex items-center justify-center select-none transition-all duration-200 aspect-square
-                      ${isDarkSquare ? 'bg-[#704224]' : 'bg-[#f5f2eb]'}
-                      ${isSelected ? 'ring-4 ring-amber-400 ring-inset z-10 bg-amber-500/40' : ''}
-                      ${isValidTarget ? 'after:content-[""] after:absolute after:w-3 after:h-3 after:bg-emerald-500/70 after:rounded-full hover:bg-emerald-500/20' : ''}
-                    `}
-                  >
-                    {pieceData && (
-                      <span
-                        className={`
-                          text-3xl md:text-4xl font-normal select-none transform transition-transform duration-150 active:scale-110 drop-shadow-md z-20
-                          ${pieceData.color === 'w' ? 'text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]' : 'text-stone-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]'}
-                        `}
+            {/* Column labels top */}
+            <div className="chess-coords-top">
+              {COLS.map(col => (
+                <span key={col} className="chess-coord-label">{col}</span>
+              ))}
+            </div>
+
+            <div className="chess-board-rows">
+              {ROWS.map((row, rowIndex) => (
+                <div key={row} className="chess-board-row">
+
+                  {/* Row label left */}
+                  <span className="chess-coord-label chess-coord-side">{row}</span>
+
+                  {COLS.map((col, colIndex) => {
+                    const square = col + row;
+                    const pieceData = getPieceDetails(square);
+                    const isDarkSquare = (colIndex + rowIndex) % 2 === 1;
+                    const isSelected = selectedSquare === square;
+                    const isValidTarget = legalMoves.includes(square);
+
+                    return (
+                      <button
+                        key={square}
+                        onClick={() => onSquareClick(square)}
+                        className={[
+                          'chess-square',
+                          isDarkSquare ? 'chess-square-dark' : 'chess-square-light',
+                          isSelected ? 'chess-square-selected' : '',
+                          isValidTarget ? 'chess-square-target' : '',
+                        ].filter(Boolean).join(' ')}
                       >
-                        {pieceData.symbol}
-                      </span>
-                    )}
-                  </button>
-                );
-              })
-            )}
+                        {/* Valid move dot on empty square */}
+                        {isValidTarget && !pieceData && (
+                          <span className="chess-move-dot" />
+                        )}
+
+                        {/* Capture ring on occupied square */}
+                        {isValidTarget && pieceData && (
+                          <span className="chess-capture-ring" />
+                        )}
+
+                        {/* Piece */}
+                        {pieceData && (
+                          <span className={`chess-piece ${pieceData.color === 'w' ? 'chess-piece-white' : 'chess-piece-black'}`}>
+                            {pieceData.symbol}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+
+                  {/* Row label right */}
+                  <span className="chess-coord-label chess-coord-side">{row}</span>
+
+                </div>
+              ))}
+            </div>
+
+            {/* Column labels bottom */}
+            <div className="chess-coords-top">
+              {COLS.map(col => (
+                <span key={col} className="chess-coord-label">{col}</span>
+              ))}
+            </div>
+
           </div>
         </div>
 
+        {/* Status & Controls */}
         <div className="chess-status">
-          <p className={`status-text ${statusClass}`}>{statusText}</p>
+          <p className={`chess-status-text ${statusClass}`}>{statusText}</p>
 
           {!solved && !showHint && (
             <button className="chess-hint-btn" onClick={handleHint}>
@@ -271,7 +335,7 @@ export default function ChessPuzzle({ onSolved }) {
                   setSolved(true);
                   setStatusText("Puzzle bypassed. Unlocking... 💖");
                   setStatusClass('success');
-                  if (onSolved) onSolved(); // ✅ immediate call
+                  if (onSolved) onSolved();
                 }}
               >
                 ⏭ Skip Puzzle
@@ -282,12 +346,23 @@ export default function ChessPuzzle({ onSolved }) {
 
       </div>
 
+      {/* Success overlay */}
       <AnimatePresence>
         {solved && (
-          <motion.div className="success-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="success-card" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-              <div className="heart">💖</div>
-              <p>{siteContent.chess.successMessage}</p>
+          <motion.div
+            className="chess-success-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="chess-success-content"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 12 }}
+            >
+              <div className="chess-success-heart">💖</div>
+              <p className="chess-success-text">{siteContent.chess.successMessage}</p>
             </motion.div>
           </motion.div>
         )}

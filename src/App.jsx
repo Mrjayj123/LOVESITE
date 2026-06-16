@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import ChessPuzzle from './components/ChessPuzzle';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -10,28 +10,19 @@ import Footer from './components/Footer';
 import './App.css';
 
 export default function App() {
+  // Always starts locked — puzzle is required every visit
   const [isUnlocked, setIsUnlocked] = useState(false);
   const audioRef = useRef(null);
 
-  useEffect(() => {
-    const savedStatus = localStorage.getItem('Paula_love_unlocked');
-    if (savedStatus === 'true') {
-      setIsUnlocked(true);
-      // Page loaded already-unlocked — try playing (may be blocked, that's OK)
-      audioRef.current?.play().catch(() => {});
-    }
-  }, []);
-
   const handleUnlock = () => {
     setIsUnlocked(true);
-    localStorage.setItem('Paula_love_unlocked', 'true');
-    // Called directly from a click — browser will allow autoplay here
+    // Called directly from a click event — browser allows autoplay here
     audioRef.current?.play().catch(() => {});
   };
 
   return (
     <div className="app-container">
-      <audio ref={audioRef} src="/home/jay_joel/JS/Present/public/music/music.mp3" loop />
+      <audio ref={audioRef} src="/music/music.mp3" loop />
 
       {!isUnlocked ? (
         <ChessPuzzle onSolved={handleUnlock} />
