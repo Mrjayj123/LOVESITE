@@ -38,8 +38,29 @@ export const siteContent = {
       title: "For You", 
       description: "Because you deserve the world" 
     },
+    
     { 
       src: "/videos/video4.mp4", 
+      title: "For You", 
+      description: "Because you deserve the world" 
+    },
+    { 
+      src: "/videos/video5.mp4", 
+      title: "For You", 
+      description: "Because you deserve the world" 
+    },
+    { 
+      src: "/videos/video6.mp4", 
+      title: "For You", 
+      description: "Because you deserve the world" 
+    },
+    { 
+      src: "/videos/video7.mp4", 
+      title: "For You", 
+      description: "Because you deserve the world" 
+    },
+    { 
+      src: "/videos/video8.mp4", 
       title: "For You", 
       description: "Because you deserve the world" 
     },

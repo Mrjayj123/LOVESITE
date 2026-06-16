@@ -28,7 +28,16 @@ export default function PhotoGallery() {
   const handleImageError = (index) => {
     setLoadedImages((prev) => ({ ...prev, [index]: false }));
   };
-
+ // ✅ Fix: check if image is already cached/complete on mount
+  const imgRefs = useRef({});
+  useEffect(() => {
+    photos.forEach((_, index) => {
+      const img = imgRefs.current[index];
+      if (img && img.complete && img.naturalWidth > 0) {
+        handleImageLoad(index);
+      }
+    });
+  }, []);
   const openLightbox = (index) => {
     setLightbox({ open: true, index });
     document.body.style.overflow = 'hidden';
@@ -91,30 +100,32 @@ export default function PhotoGallery() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               onClick={() => openLightbox(index)}
             >
-              {loadedImages[index] !== false ? (
-                <img
-                  src={photo.src}
-                  alt={photo.caption}
-                  loading="lazy"
-                  onLoad={() => handleImageLoad(index)}
-                  onError={() => handleImageError(index)}
-                  style={{ display: loadedImages[index] ? 'block' : 'none' }}
-                />
-              ) : null}
-              
-              {loadedImages[index] !== true && (
+            {/* ✅ Always render the img, use ref to catch cached loads */}
+
+                            <img
+                ref={(el) => (imgRefs.current[index] = el)}
+                src={photo.src}
+                alt={photo.caption}
+                onLoad={() => handleImageLoad(index)}
+                onError={() => handleImageError(index)}
+                style={{
+                  display: loadedImages[index] === false ? 'none' : 'block',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+
+              {loadedImages[index] === false && (
                 <div
                   className="gallery-placeholder"
                   style={{ background: PLACEHOLDER_GRADIENTS[index % PLACEHOLDER_GRADIENTS.length] }}
                 >
-                  <span className="gallery-placeholder-icon">
-                    {PLACEHOLDER_ICONS[index % PLACEHOLDER_ICONS.length]}
-                  </span>
-                  <span className="gallery-placeholder-text">
-                    {photo.caption}
-                  </span>
+                  <span className="gallery-placeholder-icon">❌</span>
+                  <span className="gallery-placeholder-text">Photo not found</span>
                 </div>
               )}
+
 
               <div className="gallery-caption">
                 <p>{photo.caption}</p>
