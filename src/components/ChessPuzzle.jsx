@@ -7,10 +7,10 @@ import './ChessPuzzle.css';
 const BULLETPROOF_FEN = "6rk/5Qpp/7P/4N3/8/8/8/6K1 w - - 0 1";
 
 const EXPLICIT_SOLUTION = [
-  { white: { from: 'h6', to: 'g7' }, black: { from: 'g8', to: 'g7' } }, 
-  { white: { from: 'f7', to: 'c4' }, black: { from: 'h8', to: 'g8' } }, 
-  { white: { from: 'c4', to: 'g8' }, black: { from: 'g7', to: 'g8' } }, 
-  { white: { from: 'e5', to: 'f7' }, black: null }                    
+  { white: { from: 'h6', to: 'g7' }, black: { from: 'g8', to: 'g7' } },
+  { white: { from: 'f7', to: 'c4' }, black: { from: 'h8', to: 'g8' } },
+  { white: { from: 'c4', to: 'g8' }, black: { from: 'g7', to: 'g8' } },
+  { white: { from: 'e5', to: 'f7' }, black: null }
 ];
 
 const HINTS = [
@@ -20,7 +20,6 @@ const HINTS = [
   "Deliver the final blow! Move your Knight to f7 for a beautiful smothered checkmate. 💖",
 ];
 
-// High contrast pieces matching the request
 const PIECES = {
   k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
   K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
@@ -85,6 +84,7 @@ export default function ChessPuzzle({ onSolved }) {
 
     const from = selectedSquare;
     const to = square;
+
     if (legalMoves.includes(to)) {
       const expected = EXPLICIT_SOLUTION[moveIndex]?.white;
       if (from === expected.from && to === expected.to) {
@@ -98,11 +98,12 @@ export default function ChessPuzzle({ onSolved }) {
             setStatusText("Good move! ✨");
             setStatusClass('');
 
+            // ✅ onSolved called immediately inside click — no setTimeout
             if (gameCopy.isCheckmate() || moveIndex === EXPLICIT_SOLUTION.length - 1) {
               setSolved(true);
               setStatusText("Checkmate! Room unlocked. 💖");
               setStatusClass('success');
-              if (onSolved) timeoutRef.current = setTimeout(() => onSolved(), 3000);
+              if (onSolved) onSolved();
               return;
             }
 
@@ -119,7 +120,9 @@ export default function ChessPuzzle({ onSolved }) {
                   if (blackResult) {
                     setGame(afterWhite);
                     const remaining = EXPLICIT_SOLUTION.length - nextMoveIndex;
-                    setStatusText(remaining > 0 ? `Move ${nextMoveIndex + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!` : "Almost there...");
+                    setStatusText(remaining > 0
+                      ? `Move ${nextMoveIndex + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`
+                      : "Almost there...");
                   }
                 }
                 setWaitingForBlack(false);
@@ -133,7 +136,7 @@ export default function ChessPuzzle({ onSolved }) {
           setLegalMoves([]);
         }
       } else {
-        setStatusText(`Not correct. Try finding a different sequence!`);
+        setStatusText("Not correct. Try finding a different sequence!");
         setStatusClass('error');
         setSelectedSquare(null);
         setLegalMoves([]);
@@ -181,8 +184,7 @@ export default function ChessPuzzle({ onSolved }) {
   return (
     <div className="chess-puzzle-gate">
       <div className="chess-content">
-        
-        {/* Core Request Headings Header */}
+
         <div className="chess-header">
           <div className="chess-lock-icon">🔒</div>
           <h1 className="tracking-wide text-3xl font-bold uppercase mb-2">Solve to Unlock</h1>
@@ -190,7 +192,6 @@ export default function ChessPuzzle({ onSolved }) {
           <p className="name-tease italic mt-2 text-rose-300 font-serif">— for Paula —</p>
         </div>
 
-        {/* Move tracker dots layout */}
         <div className="chess-move-counter">
           {Array.from({ length: totalMoves }).map((_, i) => (
             <div
@@ -205,7 +206,6 @@ export default function ChessPuzzle({ onSolved }) {
           </span>
         </div>
 
-        {/* RICH CHESSBOARD CONTAINER: Features premium dark wood outer outline border frame */}
         <div className="w-full max-w-[420px] p-4 bg-gradient-to-br from-[#3e2723] via-[#1a0c0a] to-[#3e2723] rounded-xl shadow-2xl border-4 border-[#2d1a18]/80 ring-2 ring-amber-900/40 subtle-scale-in">
           <div className="grid grid-cols-8 grid-rows-8 aspect-square w-full rounded-sm overflow-hidden bg-stone-900 shadow-inner">
             {ROWS.map((row, rowIndex) =>
@@ -213,8 +213,6 @@ export default function ChessPuzzle({ onSolved }) {
                 const square = col + row;
                 const pieceData = getPieceDetails(square);
                 const isDarkSquare = (colIndex + rowIndex) % 2 === 1;
-                
-                // State highlights tracking
                 const isSelected = selectedSquare === square;
                 const isValidTarget = legalMoves.includes(square);
 
@@ -230,7 +228,7 @@ export default function ChessPuzzle({ onSolved }) {
                     `}
                   >
                     {pieceData && (
-                      <span 
+                      <span
                         className={`
                           text-3xl md:text-4xl font-normal select-none transform transition-transform duration-150 active:scale-110 drop-shadow-md z-20
                           ${pieceData.color === 'w' ? 'text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]' : 'text-stone-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]'}
@@ -246,44 +244,42 @@ export default function ChessPuzzle({ onSolved }) {
           </div>
         </div>
 
-        {/* ---- Status & Controls ---- */}
-<div className="chess-status">
-  <p className={`status-text ${statusClass}`}>{statusText}</p>
-  
-  {!solved && !showHint && (
-    <button className="chess-hint-btn" onClick={handleHint}>
-      💡 Need a hint?
-    </button>
-  )}
-  
-  {showHint && !solved && (
-    <p className="chess-hint-text">{HINTS[moveIndex]}</p>
-  )}
-  
-  {/* Action Buttons Row */}
-  <div className="flex gap-4 mt-2">
-    {moveIndex > 0 && !solved && (
-      <button className="chess-reset-btn" onClick={handleReset}>
-        ↺ Reset Puzzle
-      </button>
-    )}
+        <div className="chess-status">
+          <p className={`status-text ${statusClass}`}>{statusText}</p>
 
-    {!solved && (
-      <button 
-        className="text-xs px-3 py-1 rounded-md border border-dashed border-stone-600 text-stone-400 hover:border-rose-400 hover:text-rose-300 transition-all duration-200 cursor-pointer background-transparent"
-        onClick={() => {
-          setSolved(true);
-          setStatusText("Puzzle bypassed. Unlocking... 💖");
-          setStatusClass('success');
-          if (onSolved) timeoutRef.current = setTimeout(() => onSolved(), 3000);
-        }}
-      >
-        ⏭ Skip Puzzle
-      </button>
-    )}
-  </div>
-</div>
-    
+          {!solved && !showHint && (
+            <button className="chess-hint-btn" onClick={handleHint}>
+              💡 Need a hint?
+            </button>
+          )}
+
+          {showHint && !solved && (
+            <p className="chess-hint-text">{HINTS[moveIndex]}</p>
+          )}
+
+          <div className="flex gap-4 mt-2">
+            {moveIndex > 0 && !solved && (
+              <button className="chess-reset-btn" onClick={handleReset}>
+                ↺ Reset Puzzle
+              </button>
+            )}
+
+            {!solved && (
+              <button
+                className="text-xs px-3 py-1 rounded-md border border-dashed border-stone-600 text-stone-400 hover:border-rose-400 hover:text-rose-300 transition-all duration-200 cursor-pointer background-transparent"
+                onClick={() => {
+                  setSolved(true);
+                  setStatusText("Puzzle bypassed. Unlocking... 💖");
+                  setStatusClass('success');
+                  if (onSolved) onSolved(); // ✅ immediate call
+                }}
+              >
+                ⏭ Skip Puzzle
+              </button>
+            )}
+          </div>
+        </div>
+
       </div>
 
       <AnimatePresence>

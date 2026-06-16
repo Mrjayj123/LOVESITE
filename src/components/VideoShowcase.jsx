@@ -48,7 +48,7 @@ export default function VideoShowcase() {
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
         >
-          Moving moments captured in time
+          How I love looking at you
         </motion.p>
 
         <div className="video-grid">
@@ -58,7 +58,7 @@ export default function VideoShowcase() {
               className="video-card"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-30px' }}
+              viewport={{ once: true, margin: '-70px' }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
             >
               <div className="video-player-wrapper">

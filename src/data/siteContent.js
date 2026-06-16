@@ -38,7 +38,12 @@ export const siteContent = {
       title: "For You", 
       description: "Because you deserve the world" 
     },
-  ],
+    { 
+      src: "/videos/video4.mp4", 
+      title: "For You", 
+      description: "Because you deserve the world" 
+    },
+    ],
 
   // ---- Love Letters ----
   loveLetters: [
@@ -55,7 +60,7 @@ export const siteContent = {
     {
       date: "From my heart",
       title: "A Promise",
-      content: "I promise to always make you laugh, to hold your hand through every storm, and to choose you — every single day. You are my today and all of my tomorrows.",
+      content: "I promise to always make you laugh, introduce you to ew experiences, and to choose you — every single day. You are my today and all of my tomorrows.",
     },
     {
       date: "Always yours",
