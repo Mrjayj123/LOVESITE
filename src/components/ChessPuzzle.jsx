@@ -4,24 +4,38 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { siteContent } from '../data/siteContent';
 import './ChessPuzzle.css';
 
-const BULLETPROOF_FEN = "6rk/5Qpp/7P/4N3/8/8/8/6K1 w - - 0 1";
+// ── Puzzle: Lolli Attack / Fried Liver variant ──────────────────────────────
+// White sacrifices a knight on f7, hunts the exposed king across the board,
+// then finishes with a bishop sacrifice and queen checkmate on d6.
+// Verified 7-move forced mate (White moves only — Black responses are forced).
+// ────────────────────────────────────────────────────────────────────────────
+
+const PUZZLE_FEN = "r1bqk2r/pppp1ppp/2n2n2/4p1N1/2B1P3/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 1";
 
 const EXPLICIT_SOLUTION = [
-  { white: { from: 'h6', to: 'g7' }, black: { from: 'g8', to: 'g7' } },
-  { white: { from: 'f7', to: 'c4' }, black: { from: 'h8', to: 'g8' } },
-  { white: { from: 'c4', to: 'g8' }, black: { from: 'g7', to: 'g8' } },
-  { white: { from: 'e5', to: 'f7' }, black: null }
+  { white: { from: 'g5', to: 'f7' }, black: { from: 'e8', to: 'f7' } }, // 1. Nxf7!! Kxf7 (forced)
+  { white: { from: 'd1', to: 'f3' }, black: { from: 'f7', to: 'e6' } }, // 2. Qf3+   Ke6
+  { white: { from: 'c3', to: 'd5' }, black: { from: 'e6', to: 'd6' } }, // 3. Nd5!   Kd6
+  { white: { from: 'f3', to: 'f4' }, black: { from: 'd6', to: 'e6' } }, // 4. Qf4+   Ke6
+  { white: { from: 'f4', to: 'e5' }, black: { from: 'e6', to: 'd7' } }, // 5. Qe5+   Kd7
+  { white: { from: 'c4', to: 'c6' }, black: { from: 'b7', to: 'c6' } }, // 6. Bc6+!! bxc6
+  { white: { from: 'e5', to: 'd6' }, black: null },                      // 7. Qd6#   Checkmate!
 ];
 
 const HINTS = [
-  "Clear the way! Capture the g7 pawn to crack open their defense.",
-  "Check the King from afar with your Queen to force him back into the corner.",
-  "Be brave! Sacrifice your Queen on g8 to trap the enemy King inside his own walls.",
-  "Deliver the final blow! Move your Knight to f7 for a beautiful smothered checkmate. 💖",
+  "The knight on g5 eyes f7 — a classic sacrifice that forks the queen and rook. Go for it!",
+  "Your queen belongs on f3. Give check and watch the king scramble.",
+  "Nd5! Fork the king and queen in one elegant move — the king must flee.",
+  "Push the king back with Qf4+. Keep the pressure on!",
+  "Qe5+ drives the king to d7 — exactly where you want it.",
+  "Bc6+!! Sacrifice the bishop to strip away the b-pawn shield. Brilliant!",
+  "Qd6# — the queen delivers the final blow. Checkmate! 💖",
 ];
 
 const TYPE_TO_KEY = {
-  king: 'k', queen: 'q', rook: 'r', bishop: 'b', knight: 'n', pawn: 'p'
+  king: 'k', queen: 'q', rook: 'r', bishop: 'b', knight: 'n', pawn: 'p',
+  // chess.js v1 uses single-letter type strings too — handle both
+  k: 'k', q: 'q', r: 'r', b: 'b', n: 'n', p: 'p',
 };
 
 const PIECES = {
@@ -35,29 +49,27 @@ const COLS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 export default function ChessPuzzle({ onSolved }) {
   const [game, setGame] = useState(() => {
     const g = new Chess();
-    g.load(BULLETPROOF_FEN);
+    g.load(PUZZLE_FEN);
     return g;
   });
-  const [moveIndex, setMoveIndex] = useState(0);
-  const [statusText, setStatusText] = useState("White to move — find the checkmate in 4 moves!");
-  const [statusClass, setStatusClass] = useState('');
-  const [showHint, setShowHint] = useState(false);
-  const [solved, setSolved] = useState(false);
-  const [waitingForBlack, setWaitingForBlack] = useState(false);
-  const [selectedSquare, setSelectedSquare] = useState(null);
-  const [legalMoves, setLegalMoves] = useState([]);
-  const timeoutRef = useRef(null);
+  const [moveIndex, setMoveIndex]       = useState(0);
+  const [statusText, setStatusText]     = useState("White to move — find checkmate in 7!");
+  const [statusClass, setStatusClass]   = useState('');
+  const [showHint, setShowHint]         = useState(false);
+  const [solved, setSolved]             = useState(false);
+  const [waitingForBlack, setWaiting]   = useState(false);
+  const [selectedSquare, setSelected]   = useState(null);
+  const [legalMoves, setLegalMoves]     = useState([]);
+  const [lastMove, setLastMove]         = useState(null); // {from, to} highlight
+  const timeoutRef  = useRef(null);
+  const moveIdxRef  = useRef(0);
+  const solvedRef   = useRef(false);
+  moveIdxRef.current = moveIndex;
+  solvedRef.current  = solved;
 
-  const moveIndexRef = useRef(moveIndex);
-  const solvedRef = useRef(solved);
-  moveIndexRef.current = moveIndex;
-  solvedRef.current = solved;
+  useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
+  // ── Helpers ──────────────────────────────────────────────────────────────
 
   const getPieceDetails = (square) => {
     const piece = game.get(square);
@@ -71,21 +83,25 @@ export default function ChessPuzzle({ onSolved }) {
   const getLegalMovesForSquare = useCallback((square) => {
     const piece = game.get(square);
     if (!piece || piece.color !== 'w') return [];
-    const moves = game.moves({ verbose: true });
-    return moves.filter(m => m.from === square).map(m => m.to);
+    return game.moves({ verbose: true })
+      .filter(m => m.from === square)
+      .map(m => m.to);
   }, [game]);
+
+  // ── Square click handler ─────────────────────────────────────────────────
 
   const onSquareClick = (square) => {
     if (solved || waitingForBlack) return;
 
+    // No piece selected yet — try to select a white piece
     if (!selectedSquare) {
       const piece = game.get(square);
       if (piece && piece.color === 'w') {
         const moves = getLegalMovesForSquare(square);
         if (moves.length) {
-          setSelectedSquare(square);
+          setSelected(square);
           setLegalMoves(moves);
-          setStatusText("Selected piece. Click a highlighted square.");
+          setStatusText("Good choice — now pick your destination.");
           setStatusClass('');
         }
       }
@@ -93,119 +109,145 @@ export default function ChessPuzzle({ onSolved }) {
     }
 
     const from = selectedSquare;
-    const to = square;
+    const to   = square;
 
-    if (legalMoves.includes(to)) {
-      const expected = EXPLICIT_SOLUTION[moveIndex]?.white;
-      if (from === expected.from && to === expected.to) {
-        try {
-          const gameCopy = new Chess(game.fen());
-          const move = gameCopy.move({ from, to, promotion: 'q' });
-          if (move) {
-            setGame(gameCopy);
-            setSelectedSquare(null);
-            setLegalMoves([]);
-
-            const currentMoveIndex = moveIndex;
-            const nextMoveIndex = currentMoveIndex + 1;
-            const isLastMove = currentMoveIndex === EXPLICIT_SOLUTION.length - 1;
-
-            if (isLastMove) {
-              setSolved(true);
-              setStatusText("Checkmate! Room unlocked. 💖");
-              setStatusClass('success');
-              if (onSolved) onSolved();
-              return;
-            }
-
-            setStatusText("Good move! ✨");
-            setStatusClass('');
-            setMoveIndex(nextMoveIndex);
-
-            const blackMove = EXPLICIT_SOLUTION[currentMoveIndex]?.black;
-            if (blackMove) {
-              setWaitingForBlack(true);
-              const fenAfterWhite = gameCopy.fen();
-              timeoutRef.current = setTimeout(() => {
-                const afterWhite = new Chess(fenAfterWhite);
-                const blackResult = afterWhite.move(blackMove);
-                if (blackResult) {
-                  setGame(afterWhite);
-                  const remaining = EXPLICIT_SOLUTION.length - nextMoveIndex;
-                  setStatusText(remaining > 0
-                    ? `Move ${nextMoveIndex + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`
-                    : "Almost there...");
-                }
-                setWaitingForBlack(false);
-              }, 600);
-            }
-          }
-        } catch (err) {
-          setStatusText("Invalid move. Try again.");
-          setStatusClass('error');
-          setSelectedSquare(null);
-          setLegalMoves([]);
-        }
-      } else {
-        setStatusText("Not correct. Try finding a different sequence!");
-        setStatusClass('error');
-        setSelectedSquare(null);
-        setLegalMoves([]);
-        timeoutRef.current = setTimeout(() => {
-          if (!solvedRef.current) {
-            setStatusText(`Move ${moveIndexRef.current + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`);
-            setStatusClass('');
-          }
-        }, 2000);
-      }
-    } else {
+    // Re-select another white piece
+    if (!legalMoves.includes(to)) {
       const piece = game.get(square);
       if (piece && piece.color === 'w') {
         const moves = getLegalMovesForSquare(square);
         if (moves.length) {
-          setSelectedSquare(square);
+          setSelected(square);
           setLegalMoves(moves);
-          setStatusText("Selected piece. Click a highlighted square.");
+          setStatusText("Good choice — now pick your destination.");
           setStatusClass('');
           return;
         }
       }
-      setSelectedSquare(null);
+      setSelected(null);
       setLegalMoves([]);
       setStatusText("Click one of your pieces to select it.");
       setStatusClass('');
+      return;
+    }
+
+    // Destination clicked — check if it matches the solution
+    const expected = EXPLICIT_SOLUTION[moveIndex]?.white;
+    if (from === expected.from && to === expected.to) {
+      try {
+        const gameCopy = new Chess(game.fen());
+        const move = gameCopy.move({ from, to, promotion: 'q' });
+        if (!move) throw new Error('illegal');
+
+        setGame(gameCopy);
+        setSelected(null);
+        setLegalMoves([]);
+        setLastMove({ from, to });
+
+        const currentIdx = moveIndex;
+        const nextIdx    = currentIdx + 1;
+        const isLast     = currentIdx === EXPLICIT_SOLUTION.length - 1;
+
+        if (isLast) {
+          setSolved(true);
+          setStatusText("Checkmate! You found it! 💖");
+          setStatusClass('success');
+          if (onSolved) onSolved();
+          return;
+        }
+
+        setStatusText("Brilliant! ✨ Watch Black's response...");
+        setStatusClass('');
+        setMoveIndex(nextIdx);
+
+        // Play Black's forced response
+        const blackMove = EXPLICIT_SOLUTION[currentIdx]?.black;
+        if (blackMove) {
+          setWaiting(true);
+          const fenAfterWhite = gameCopy.fen();
+          timeoutRef.current = setTimeout(() => {
+            try {
+              const afterWhite = new Chess(fenAfterWhite);
+              const blackResult = afterWhite.move({
+                from: blackMove.from,
+                to: blackMove.to,
+                promotion: 'q',
+              });
+              if (blackResult) {
+                setGame(afterWhite);
+                setLastMove({ from: blackMove.from, to: blackMove.to });
+                const remaining = EXPLICIT_SOLUTION.length - nextIdx;
+                setStatusText(
+                  remaining === 1
+                    ? "One more move — deliver the checkmate!"
+                    : `Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`
+                );
+              } else {
+                console.error('Black move failed:', blackMove, 'FEN:', fenAfterWhite);
+                setStatusText(`Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
+              }
+            } catch (err) {
+              console.error('Black move error:', err, blackMove);
+              setStatusText(`Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
+            } finally {
+              setWaiting(false);
+            }
+          }, 700);
+        }
+      } catch {
+        setStatusText("Something went wrong. Try again.");
+        setStatusClass('error');
+        setSelected(null);
+        setLegalMoves([]);
+      }
+    } else {
+      // Wrong solution move
+      setStatusText("That's not the right move — think deeper!");
+      setStatusClass('error');
+      setSelected(null);
+      setLegalMoves([]);
+      timeoutRef.current = setTimeout(() => {
+        if (!solvedRef.current) {
+          setStatusText(`Move ${moveIdxRef.current + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
+          setStatusClass('');
+        }
+      }, 2000);
     }
   };
+
+  // ── Controls ─────────────────────────────────────────────────────────────
 
   const handleHint = () => {
     setShowHint(true);
     const expected = EXPLICIT_SOLUTION[moveIndex]?.white;
     if (expected) {
-      setStatusText(`Hint: Move ${expected.from.toUpperCase()} → ${expected.to.toUpperCase()}`);
+      setStatusText(`Hint: ${expected.from.toUpperCase()} → ${expected.to.toUpperCase()}`);
       timeoutRef.current = setTimeout(() => {
-        if (!solvedRef.current) {
-          setStatusText(`Move ${moveIndexRef.current + 1} of ${EXPLICIT_SOLUTION.length} — Your turn!`);
-        }
+        if (!solvedRef.current)
+          setStatusText(`Move ${moveIdxRef.current + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
       }, 4000);
     }
   };
 
   const handleReset = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    const newGame = new Chess();
-    newGame.load(BULLETPROOF_FEN);
-    setGame(newGame);
+    const g = new Chess();
+    g.load(PUZZLE_FEN);
+    setGame(g);
     setMoveIndex(0);
-    setStatusText("White to move — find the checkmate in 4 moves!");
+    setStatusText("White to move — find checkmate in 7!");
     setStatusClass('');
     setShowHint(false);
     setSolved(false);
-    setWaitingForBlack(false);
-    setSelectedSquare(null);
+    setWaiting(false);
+    setSelected(null);
     setLegalMoves([]);
+    setLastMove(null);
   };
 
   const totalMoves = EXPLICIT_SOLUTION.length;
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="chess-puzzle-gate">
@@ -215,7 +257,9 @@ export default function ChessPuzzle({ onSolved }) {
         <div className="chess-header">
           <div className="chess-lock-icon">🔒</div>
           <h1 className="tracking-wide text-3xl font-bold uppercase mb-2">Solve to Unlock</h1>
-          <p className="opacity-90 max-w-sm mx-auto">Find the checkmate in 4 moves to reveal something special</p>
+          <p className="opacity-90 max-w-sm mx-auto">
+            White to move — find the checkmate in 7 moves
+          </p>
           <p className="name-tease italic mt-2 text-rose-300 font-serif">— for Konzi —</p>
         </div>
 
@@ -225,7 +269,10 @@ export default function ChessPuzzle({ onSolved }) {
             <div
               key={i}
               className={`move-dot ${
-                i < moveIndex ? 'completed' : i === moveIndex && !solved ? 'current' : solved ? 'completed' : ''
+                solved           ? 'completed'
+                : i < moveIndex  ? 'completed'
+                : i === moveIndex ? 'current'
+                : ''
               }`}
             />
           ))}
@@ -234,11 +281,11 @@ export default function ChessPuzzle({ onSolved }) {
           </span>
         </div>
 
-        {/* Rich Chessboard */}
+        {/* ── Rich Chessboard ── */}
         <div className="chess-board-wrapper">
           <div className="chess-board-inner">
 
-            {/* Column labels top */}
+            {/* Column labels — top */}
             <div className="chess-coords-top">
               {COLS.map(col => (
                 <span key={col} className="chess-coord-label">{col}</span>
@@ -249,15 +296,17 @@ export default function ChessPuzzle({ onSolved }) {
               {ROWS.map((row, rowIndex) => (
                 <div key={row} className="chess-board-row">
 
-                  {/* Row label left */}
+                  {/* Row label — left */}
                   <span className="chess-coord-label chess-coord-side">{row}</span>
 
                   {COLS.map((col, colIndex) => {
-                    const square = col + row;
-                    const pieceData = getPieceDetails(square);
-                    const isDarkSquare = (colIndex + rowIndex) % 2 === 1;
-                    const isSelected = selectedSquare === square;
-                    const isValidTarget = legalMoves.includes(square);
+                    const square       = col + row;
+                    const pieceData    = getPieceDetails(square);
+                    const isDark       = (colIndex + rowIndex) % 2 === 1;
+                    const isSelected   = selectedSquare === square;
+                    const isTarget     = legalMoves.includes(square);
+                    const isLastFrom   = lastMove?.from === square;
+                    const isLastTo     = lastMove?.to   === square;
 
                     return (
                       <button
@@ -265,24 +314,32 @@ export default function ChessPuzzle({ onSolved }) {
                         onClick={() => onSquareClick(square)}
                         className={[
                           'chess-square',
-                          isDarkSquare ? 'chess-square-dark' : 'chess-square-light',
-                          isSelected ? 'chess-square-selected' : '',
-                          isValidTarget ? 'chess-square-target' : '',
+                          isDark       ? 'chess-square-dark'     : 'chess-square-light',
+                          isSelected   ? 'chess-square-selected' : '',
+                          isTarget     ? 'chess-square-target'   : '',
+                          isLastFrom   ? 'chess-square-last-from': '',
+                          isLastTo     ? 'chess-square-last-to'  : '',
                         ].filter(Boolean).join(' ')}
                       >
-                        {/* Valid move dot on empty square */}
-                        {isValidTarget && !pieceData && (
+                        {/* Empty-square move dot */}
+                        {isTarget && !pieceData && (
                           <span className="chess-move-dot" />
                         )}
 
-                        {/* Capture ring on occupied square */}
-                        {isValidTarget && pieceData && (
+                        {/* Capturable-piece ring */}
+                        {isTarget && pieceData && (
                           <span className="chess-capture-ring" />
                         )}
 
-                        {/* Piece */}
+                        {/* Piece glyph */}
                         {pieceData && (
-                          <span className={`chess-piece ${pieceData.color === 'w' ? 'chess-piece-white' : 'chess-piece-black'}`}>
+                          <span
+                            className={`chess-piece ${
+                              pieceData.color === 'w'
+                                ? 'chess-piece-white'
+                                : 'chess-piece-black'
+                            }`}
+                          >
                             {pieceData.symbol}
                           </span>
                         )}
@@ -290,14 +347,14 @@ export default function ChessPuzzle({ onSolved }) {
                     );
                   })}
 
-                  {/* Row label right */}
+                  {/* Row label — right */}
                   <span className="chess-coord-label chess-coord-side">{row}</span>
 
                 </div>
               ))}
             </div>
 
-            {/* Column labels bottom */}
+            {/* Column labels — bottom */}
             <div className="chess-coords-top">
               {COLS.map(col => (
                 <span key={col} className="chess-coord-label">{col}</span>
@@ -307,7 +364,7 @@ export default function ChessPuzzle({ onSolved }) {
           </div>
         </div>
 
-        {/* Status & Controls */}
+        {/* Status & controls */}
         <div className="chess-status">
           <p className={`chess-status-text ${statusClass}`}>{statusText}</p>
 
@@ -330,7 +387,7 @@ export default function ChessPuzzle({ onSolved }) {
 
             {!solved && (
               <button
-                className="text-xs px-3 py-1 rounded-md border border-dashed border-stone-600 text-stone-400 hover:border-rose-400 hover:text-rose-300 transition-all duration-200 cursor-pointer background-transparent"
+                className="chess-skip-btn"
                 onClick={() => {
                   setSolved(true);
                   setStatusText("Puzzle bypassed. Unlocking... 💖");

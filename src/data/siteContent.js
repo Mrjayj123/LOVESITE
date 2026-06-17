@@ -30,24 +30,24 @@ export const siteContent = {
   videos: [
     { 
       src: "/videos/video1.mp4", 
-      title: "Our Story", 
+      title: "Your cutest yet", 
       description: "A little compilation of our best moments" 
     },
     { 
       src: "/videos/video2.mp4", 
-      title: "For You", 
-      description: "Because you deserve the world" 
+      title: "Let me see you", 
+      description: "Because you I love you" 
     },
     
     { 
       src: "/videos/video4.mp4", 
       title: "For You", 
-      description: "Because you deserve the world" 
+      description: "Because you are my home" 
     },
     { 
       src: "/videos/video5.mp4", 
       title: "For You", 
-      description: "Because you deserve the world" 
+      description: "Because I love you" 
     },
     { 
       src: "/videos/video6.mp4", 
