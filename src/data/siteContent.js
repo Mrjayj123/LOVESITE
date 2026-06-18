@@ -49,11 +49,6 @@ export const siteContent = {
       title: "Your Smile", 
       description: "Gets me every time" 
     },
-    { 
-      src: "/videos/video6.mp4", 
-      title: "For You", 
-      description: "Because you deserve the world" 
-    },
     ],
 
   // ---- Love Letters ----
