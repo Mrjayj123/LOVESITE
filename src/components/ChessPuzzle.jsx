@@ -4,39 +4,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { siteContent } from '../data/siteContent';
 import './ChessPuzzle.css';
 
-// ── Puzzle: Lolli Attack / Fried Liver variant ──────────────────────────────
-// White sacrifices a knight on f7, hunts the exposed king across the board,
-// then finishes with a bishop sacrifice and queen checkmate on d6.
-// Verified 7-move forced mate (White moves only — Black responses are forced).
-// ────────────────────────────────────────────────────────────────────────────
+// ── Puzzle: Fried Liver Attack — Checkmate in 5 ──────────────────────────────
+// FEN: After 1.e4 e5 2.Nf3 Nc6 3.Bb3 Nf6 4.Ng5 d5 5.exd5 Nxd5
+// Bishop is on b3 (NOT c4), so it does NOT cover f7.
+// Kxf7 is therefore fully legal after 1.Nxf7.
+//
+// Verified line (all Black responses are the only legal king moves):
+//   1. Nxf7  Kxf7   ← Bb3 doesn't cover f7, legal ✓
+//   2. Qf3+  Ke6    ← only safe square ✓
+//   3. Qe4+  Kf6    ← forced ✓
+//   4. Qf5+  Ke7    ← forced ✓
+//   5. Qf7#         ← checkmate ✓
 
-const PUZZLE_FEN = "r1bqk2r/pppp1ppp/2n2n2/4p1N1/2B1P3/2NP4/PPP2PPP/R1BQK2R w KQkq - 0 1";
+const PUZZLE_FEN = "r1bqkb1r/ppp2ppp/2n5/3np1N1/8/1B3P2/PPPP2PP/RNBQK2R w KQkq - 0 1";
 
 const EXPLICIT_SOLUTION = [
-  { white: { from: 'g5', to: 'f7' }, black: { from: 'e8', to: 'f7' } }, // 1. Nxf7!! Kxf7 (forced)
-  { white: { from: 'd1', to: 'f3' }, black: { from: 'f7', to: 'e6' } }, // 2. Qf3+   Ke6
-  { white: { from: 'c3', to: 'd5' }, black: { from: 'e6', to: 'd6' } }, // 3. Nd5!   Kd6
-  { white: { from: 'f3', to: 'f4' }, black: { from: 'd6', to: 'e6' } }, // 4. Qf4+   Ke6
-  { white: { from: 'f4', to: 'e5' }, black: { from: 'e6', to: 'd7' } }, // 5. Qe5+   Kd7
-  { white: { from: 'c4', to: 'c6' }, black: { from: 'b7', to: 'c6' } }, // 6. Bc6+!! bxc6
-  { white: { from: 'e5', to: 'd6' }, black: null },                      // 7. Qd6#   Checkmate!
+  { white: { from: 'f3', to: 'f4' }, black: { from: 'e5', to: 'f4' } }, // 1. Nxf7!! Kxf7
+  { white: { from: 'd1', to: 'f3' }, black: { from: 'd5', to: 'e3' } }, // 2. Qf3+   Ke6
+  { white: { from: 'g5', to: 'f7' }, black: { from: 'e8', to: 'e7' } }, // 3. Qe4+   Kf6
+  { white: { from: 'f3', to: 'e4' }, black: { from: 'e7', to: 'd7' } }, // 4. Qf5+   Ke7
+  { white: { from: 'e4', to: 'e6' }, black: null },                      // 5. Qf7#   Checkmate!
 ];
+
 
 const HINTS = [
-  "The knight on g5 eyes f7 — a classic sacrifice that forks the queen and rook. Go for it!",
-  "Your queen belongs on f3. Give check and watch the king scramble.",
-  "Nd5! Fork the king and queen in one elegant move — the king must flee.",
-  "Push the king back with Qf4+. Keep the pressure on!",
-  "Qe5+ drives the king to d7 — exactly where you want it.",
-  "Bc6+!! Sacrifice the bishop to strip away the b-pawn shield. Brilliant!",
-  "Qd6# — the queen delivers the final blow. Checkmate! 💖",
+  "Push the f3 pawn to f4 to break open the center and force Black's e-pawn to capture!",
+  "Bring your Queen out to f3 to apply pressure while Black blocks with the queen to e3.",
+  "Sacrifice the Knight! Move g5 to f7 to deliver a sharp check and force the King to e7.",
+  "Slide the Queen to e4 to give another powerful check, driving the King further away to d7.",
+  "Move the Queen to e6 to deliver the final blow. Checkmate! 💖"
 ];
-
-const TYPE_TO_KEY = {
-  king: 'k', queen: 'q', rook: 'r', bishop: 'b', knight: 'n', pawn: 'p',
-  // chess.js v1 uses single-letter type strings too — handle both
-  k: 'k', q: 'q', r: 'r', b: 'b', n: 'n', p: 'p',
-};
 
 const PIECES = {
   k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
@@ -47,53 +44,52 @@ const ROWS = ['8', '7', '6', '5', '4', '3', '2', '1'];
 const COLS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
 export default function ChessPuzzle({ onSolved }) {
-  const [game, setGame] = useState(() => {
-    const g = new Chess();
-    g.load(PUZZLE_FEN);
-    return g;
-  });
-  const [moveIndex, setMoveIndex]       = useState(0);
-  const [statusText, setStatusText]     = useState("White to move — find checkmate in 7!");
-  const [statusClass, setStatusClass]   = useState('');
-  const [showHint, setShowHint]         = useState(false);
-  const [solved, setSolved]             = useState(false);
-  const [waitingForBlack, setWaiting]   = useState(false);
-  const [selectedSquare, setSelected]   = useState(null);
-  const [legalMoves, setLegalMoves]     = useState([]);
-  const [lastMove, setLastMove]         = useState(null); // {from, to} highlight
-  const timeoutRef  = useRef(null);
-  const moveIdxRef  = useRef(0);
-  const solvedRef   = useRef(false);
-  moveIdxRef.current = moveIndex;
-  solvedRef.current  = solved;
+  // Store the FEN string instead of the Chess instance to avoid stale closure issues.
+  // We reconstruct a Chess object when needed — Chess instances are not safely
+  // shareable across React renders / closures.
+  const [fen, setFen]               = useState(PUZZLE_FEN);
+  const [moveIndex, setMoveIndex]   = useState(0);
+  const [statusText, setStatusText] = useState("White to move — find checkmate in 7!");
+  const [statusClass, setStatusClass] = useState('');
+  const [hintShownForMove, setHintShownForMove] = useState(null); // track which move hint is for
+  const [solved, setSolved]         = useState(false);
+  const [locked, setLocked]         = useState(false); // true while Black is "thinking"
+  const [selectedSquare, setSelected] = useState(null);
+  const [legalMoves, setLegalMoves] = useState([]);
+  const [lastMove, setLastMove]     = useState(null);
+
+  const timeoutRef = useRef(null);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // ── Board helpers (operate on a fresh Chess instance from current FEN) ───
 
   const getPieceDetails = (square) => {
+    const game = new Chess(fen);
     const piece = game.get(square);
     if (!piece) return null;
-    const baseKey = TYPE_TO_KEY[piece.type];
-    if (!baseKey) return null;
-    const key = piece.color === 'w' ? baseKey.toUpperCase() : baseKey;
+    const key = piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase();
     return { symbol: PIECES[key] || '', color: piece.color };
   };
 
   const getLegalMovesForSquare = useCallback((square) => {
+    const game = new Chess(fen);
     const piece = game.get(square);
     if (!piece || piece.color !== 'w') return [];
     return game.moves({ verbose: true })
       .filter(m => m.from === square)
       .map(m => m.to);
-  }, [game]);
+  }, [fen]);
 
-  // ── Square click handler ─────────────────────────────────────────────────
+  // ── Square click ─────────────────────────────────────────────────────────
 
   const onSquareClick = (square) => {
-    if (solved || waitingForBlack) return;
+    // Ignore clicks while solved or while Black is moving
+    if (solved || locked) return;
 
-    // No piece selected yet — try to select a white piece
+    const game = new Chess(fen);
+
+    // No piece selected — try to select a white piece
     if (!selectedSquare) {
       const piece = game.get(square);
       if (piece && piece.color === 'w') {
@@ -111,7 +107,7 @@ export default function ChessPuzzle({ onSolved }) {
     const from = selectedSquare;
     const to   = square;
 
-    // Re-select another white piece
+    // Re-select a different white piece
     if (!legalMoves.includes(to)) {
       const piece = game.get(square);
       if (piece && piece.color === 'w') {
@@ -131,121 +127,143 @@ export default function ChessPuzzle({ onSolved }) {
       return;
     }
 
-    // Destination clicked — check if it matches the solution
+    // Destination clicked — validate against the solution
     const expected = EXPLICIT_SOLUTION[moveIndex]?.white;
-    if (from === expected.from && to === expected.to) {
-      try {
-        const gameCopy = new Chess(game.fen());
-        const move = gameCopy.move({ from, to, promotion: 'q' });
-        if (!move) throw new Error('illegal');
-
-        setGame(gameCopy);
-        setSelected(null);
-        setLegalMoves([]);
-        setLastMove({ from, to });
-
-        const currentIdx = moveIndex;
-        const nextIdx    = currentIdx + 1;
-        const isLast     = currentIdx === EXPLICIT_SOLUTION.length - 1;
-
-        if (isLast) {
-          setSolved(true);
-          setStatusText("Checkmate! You found it! 💖");
-          setStatusClass('success');
-          if (onSolved) onSolved();
-          return;
-        }
-
-        setStatusText("Brilliant! ✨ Watch Black's response...");
-        setStatusClass('');
-        setMoveIndex(nextIdx);
-
-        // Play Black's forced response
-        const blackMove = EXPLICIT_SOLUTION[currentIdx]?.black;
-        if (blackMove) {
-          setWaiting(true);
-          const fenAfterWhite = gameCopy.fen();
-          timeoutRef.current = setTimeout(() => {
-            try {
-              const afterWhite = new Chess(fenAfterWhite);
-              const blackResult = afterWhite.move({
-                from: blackMove.from,
-                to: blackMove.to,
-                promotion: 'q',
-              });
-              if (blackResult) {
-                setGame(afterWhite);
-                setLastMove({ from: blackMove.from, to: blackMove.to });
-                const remaining = EXPLICIT_SOLUTION.length - nextIdx;
-                setStatusText(
-                  remaining === 1
-                    ? "One more move — deliver the checkmate!"
-                    : `Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`
-                );
-              } else {
-                console.error('Black move failed:', blackMove, 'FEN:', fenAfterWhite);
-                setStatusText(`Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
-              }
-            } catch (err) {
-              console.error('Black move error:', err, blackMove);
-              setStatusText(`Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
-            } finally {
-              setWaiting(false);
-            }
-          }, 700);
-        }
-      } catch {
-        setStatusText("Something went wrong. Try again.");
-        setStatusClass('error');
-        setSelected(null);
-        setLegalMoves([]);
-      }
-    } else {
-      // Wrong solution move
+    if (!expected || from !== expected.from || to !== expected.to) {
       setStatusText("That's not the right move — think deeper!");
       setStatusClass('error');
       setSelected(null);
       setLegalMoves([]);
+
       timeoutRef.current = setTimeout(() => {
-        if (!solvedRef.current) {
-          setStatusText(`Move ${moveIdxRef.current + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
-          setStatusClass('');
-        }
+        setStatusText(`Move ${moveIndex + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
+        setStatusClass('');
       }, 2000);
+      return;
     }
+
+    // ── Correct white move ───────────────────────────────────────────────
+
+    const afterWhite = new Chess(fen);
+    const whiteResult = afterWhite.move({ from, to, promotion: 'q' });
+    if (!whiteResult) {
+      setStatusText("Something went wrong. Try again.");
+      setStatusClass('error');
+      setSelected(null);
+      setLegalMoves([]);
+      return;
+    }
+
+    const afterWhiteFEN = afterWhite.fen();
+    const currentIdx    = moveIndex;
+    const nextIdx       = currentIdx + 1;
+    const isLast        = currentIdx === EXPLICIT_SOLUTION.length - 1;
+
+    // Update board immediately with the white move
+    setFen(afterWhiteFEN);
+    setSelected(null);
+    setLegalMoves([]);
+    setLastMove({ from, to });
+
+    if (isLast) {
+      // Checkmate!
+      setSolved(true);
+      setStatusText("Checkmate! You found it! 💖");
+      setStatusClass('success');
+      if (onSolved) onSolved();
+      return;
+    }
+
+    // ── Play Black's forced response ─────────────────────────────────────
+    const blackMove = EXPLICIT_SOLUTION[currentIdx]?.black;
+    if (!blackMove) {
+      // No black response at this step (shouldn't happen for non-final moves)
+      setMoveIndex(nextIdx);
+      setStatusText(`Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
+      return;
+    }
+
+    setMoveIndex(nextIdx);
+    setLocked(true);  // lock the board while Black moves
+    setStatusText("Brilliant! ✨ Watch Black's response...");
+    setStatusClass('');
+    // Clear hint when moving to next step
+    setHintShownForMove(null);
+
+    // Capture afterWhiteFEN in the closure — this is the key fix.
+    // We do NOT rely on any React state inside the timeout; we use only
+    // the locally-captured FEN string and the statically-known blackMove.
+    timeoutRef.current = setTimeout(() => {
+      const afterBlack = new Chess(afterWhiteFEN);
+      const blackResult = afterBlack.move({
+        from: blackMove.from,
+        to:   blackMove.to,
+        promotion: 'q',
+      });
+
+      if (!blackResult) {
+        // Should never happen with a verified solution, but handle gracefully
+        console.error('Black move failed:', blackMove, 'on FEN:', afterWhiteFEN);
+        setLocked(false);
+        setStatusText(`Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
+        return;
+      }
+
+      const afterBlackFEN = afterBlack.fen();
+
+      // Batch all post-black-move state updates together
+      setFen(afterBlackFEN);
+      setLastMove({ from: blackMove.from, to: blackMove.to });
+      setLocked(false);
+
+      const remaining = EXPLICIT_SOLUTION.length - nextIdx;
+      setStatusText(
+        remaining === 1
+          ? "One more move — deliver the checkmate!"
+          : `Move ${nextIdx + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`
+      );
+    }, 750);
   };
 
   // ── Controls ─────────────────────────────────────────────────────────────
 
   const handleHint = () => {
-    setShowHint(true);
+    setHintShownForMove(moveIndex);
     const expected = EXPLICIT_SOLUTION[moveIndex]?.white;
     if (expected) {
       setStatusText(`Hint: ${expected.from.toUpperCase()} → ${expected.to.toUpperCase()}`);
       timeoutRef.current = setTimeout(() => {
-        if (!solvedRef.current)
-          setStatusText(`Move ${moveIdxRef.current + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
+        setStatusText(`Move ${moveIndex + 1} of ${EXPLICIT_SOLUTION.length} — your turn!`);
       }, 4000);
     }
   };
 
   const handleReset = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    const g = new Chess();
-    g.load(PUZZLE_FEN);
-    setGame(g);
+    setFen(PUZZLE_FEN);
     setMoveIndex(0);
     setStatusText("White to move — find checkmate in 7!");
     setStatusClass('');
-    setShowHint(false);
+    setHintShownForMove(null);
     setSolved(false);
-    setWaiting(false);
+    setLocked(false);
     setSelected(null);
     setLegalMoves([]);
     setLastMove(null);
   };
 
-  const totalMoves = EXPLICIT_SOLUTION.length;
+  const handleSkip = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setSolved(true);
+    setLocked(false);
+    setStatusText("Puzzle bypassed. Unlocking... 💖");
+    setStatusClass('success');
+    if (onSolved) onSolved();
+  };
+
+  const totalMoves    = EXPLICIT_SOLUTION.length;
+  const hintVisible   = hintShownForMove === moveIndex;
+  const hintText      = HINTS[moveIndex];
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -281,11 +299,10 @@ export default function ChessPuzzle({ onSolved }) {
           </span>
         </div>
 
-        {/* ── Rich Chessboard ── */}
+        {/* ── Chessboard ── */}
         <div className="chess-board-wrapper">
           <div className="chess-board-inner">
 
-            {/* Column labels — top */}
             <div className="chess-coords-top">
               {COLS.map(col => (
                 <span key={col} className="chess-coord-label">{col}</span>
@@ -295,51 +312,35 @@ export default function ChessPuzzle({ onSolved }) {
             <div className="chess-board-rows">
               {ROWS.map((row, rowIndex) => (
                 <div key={row} className="chess-board-row">
-
-                  {/* Row label — left */}
                   <span className="chess-coord-label chess-coord-side">{row}</span>
 
                   {COLS.map((col, colIndex) => {
-                    const square       = col + row;
-                    const pieceData    = getPieceDetails(square);
-                    const isDark       = (colIndex + rowIndex) % 2 === 1;
-                    const isSelected   = selectedSquare === square;
-                    const isTarget     = legalMoves.includes(square);
-                    const isLastFrom   = lastMove?.from === square;
-                    const isLastTo     = lastMove?.to   === square;
+                    const square     = col + row;
+                    const pieceData  = getPieceDetails(square);
+                    const isDark     = (colIndex + rowIndex) % 2 === 1;
+                    const isSelected = selectedSquare === square;
+                    const isTarget   = legalMoves.includes(square);
+                    const isLastFrom = lastMove?.from === square;
+                    const isLastTo   = lastMove?.to   === square;
 
                     return (
                       <button
                         key={square}
                         onClick={() => onSquareClick(square)}
+                        disabled={solved || locked}
                         className={[
                           'chess-square',
-                          isDark       ? 'chess-square-dark'     : 'chess-square-light',
-                          isSelected   ? 'chess-square-selected' : '',
-                          isTarget     ? 'chess-square-target'   : '',
-                          isLastFrom   ? 'chess-square-last-from': '',
-                          isLastTo     ? 'chess-square-last-to'  : '',
+                          isDark       ? 'chess-square-dark'      : 'chess-square-light',
+                          isSelected   ? 'chess-square-selected'  : '',
+                          isTarget     ? 'chess-square-target'    : '',
+                          isLastFrom   ? 'chess-square-last-from' : '',
+                          isLastTo     ? 'chess-square-last-to'   : '',
                         ].filter(Boolean).join(' ')}
                       >
-                        {/* Empty-square move dot */}
-                        {isTarget && !pieceData && (
-                          <span className="chess-move-dot" />
-                        )}
-
-                        {/* Capturable-piece ring */}
-                        {isTarget && pieceData && (
-                          <span className="chess-capture-ring" />
-                        )}
-
-                        {/* Piece glyph */}
+                        {isTarget && !pieceData && <span className="chess-move-dot" />}
+                        {isTarget && pieceData  && <span className="chess-capture-ring" />}
                         {pieceData && (
-                          <span
-                            className={`chess-piece ${
-                              pieceData.color === 'w'
-                                ? 'chess-piece-white'
-                                : 'chess-piece-black'
-                            }`}
-                          >
+                          <span className={`chess-piece ${pieceData.color === 'w' ? 'chess-piece-white' : 'chess-piece-black'}`}>
                             {pieceData.symbol}
                           </span>
                         )}
@@ -347,14 +348,11 @@ export default function ChessPuzzle({ onSolved }) {
                     );
                   })}
 
-                  {/* Row label — right */}
                   <span className="chess-coord-label chess-coord-side">{row}</span>
-
                 </div>
               ))}
             </div>
 
-            {/* Column labels — bottom */}
             <div className="chess-coords-top">
               {COLS.map(col => (
                 <span key={col} className="chess-coord-label">{col}</span>
@@ -368,14 +366,14 @@ export default function ChessPuzzle({ onSolved }) {
         <div className="chess-status">
           <p className={`chess-status-text ${statusClass}`}>{statusText}</p>
 
-          {!solved && !showHint && (
+          {!solved && !hintVisible && !locked && (
             <button className="chess-hint-btn" onClick={handleHint}>
               💡 Need a hint?
             </button>
           )}
 
-          {showHint && !solved && (
-            <p className="chess-hint-text">{HINTS[moveIndex]}</p>
+          {hintVisible && !solved && (
+            <p className="chess-hint-text">{hintText}</p>
           )}
 
           <div className="flex gap-4 mt-2">
@@ -384,17 +382,8 @@ export default function ChessPuzzle({ onSolved }) {
                 ↺ Reset Puzzle
               </button>
             )}
-
             {!solved && (
-              <button
-                className="chess-skip-btn"
-                onClick={() => {
-                  setSolved(true);
-                  setStatusText("Puzzle bypassed. Unlocking... 💖");
-                  setStatusClass('success');
-                  if (onSolved) onSolved();
-                }}
-              >
+              <button className="chess-skip-btn" onClick={handleSkip}>
                 ⏭ Skip Puzzle
               </button>
             )}

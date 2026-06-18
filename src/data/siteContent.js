@@ -17,12 +17,12 @@ export const siteContent = {
   // ---- Photos ----
   // Replace these with real photos! Just drop them in public/photos/
   photos: [
-    { src: "/photos/photo1.jpg", caption: "The smile that lights up my world" },
-    { src: "/photos/photo2.jpg", caption: "Our favorite place" },
-    { src: "/photos/photo3.jpg", caption: "Making memories together" },
-    { src: "/photos/photo4.jpg", caption: "You, being effortlessly perfect" },
-    { src: "/photos/photo5.jpg", caption: "Adventures with my favorite person" },
-    { src: "/photos/photo6.jpg", caption: "This moment, forever" },
+    { src: "/photos/photo1.jpg", caption: "Your eyes 😍" },
+    { src: "/photos/photo2.jpg", caption: "My favorite snack 🌚 " },
+    { src: "/photos/photo3.jpg", caption: "Effortlessly goreous" },
+    { src: "/photos/photo4.jpg", caption: "Usimeze mate sana  🌚 " },
+    { src: "/photos/photo5.jpg", caption: "Ok mamaa 💞 " },
+    { src: "/photos/photo6.jpg", caption: "Gangsta eh?  😂 " },
   ],
 
   // ---- Videos ----
@@ -41,26 +41,16 @@ export const siteContent = {
     
     { 
       src: "/videos/video4.mp4", 
-      title: "For You", 
-      description: "Because you are my home" 
+      title: "That Dress", 
+      description: "Too fvckin sexxy 😍" 
     },
     { 
       src: "/videos/video5.mp4", 
-      title: "For You", 
-      description: "Because I love you" 
+      title: "Your Smile", 
+      description: "Gets me every time" 
     },
     { 
       src: "/videos/video6.mp4", 
-      title: "For You", 
-      description: "Because you deserve the world" 
-    },
-    { 
-      src: "/videos/video7.mp4", 
-      title: "For You", 
-      description: "Because you deserve the world" 
-    },
-    { 
-      src: "/videos/video8.mp4", 
       title: "For You", 
       description: "Because you deserve the world" 
     },
